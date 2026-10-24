@@ -111,3 +111,47 @@ create policy "moo_intro_insert_sender"
 
 -- Member data is not a bankable identity/credential verification service.
 -- Do not add public phone/email columns without privacy and RLS redesign.
+
+
+-- PRIVATE ADDRESS BOOK (not MOO public member profiles)
+-- Users can import their networking contacts; contacts are private to the importing account.
+-- CSV imports never automatically onboard a contact as a member.
+create table if not exists public.moo_contacts (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  full_name text not null check (char_length(trim(full_name)) between 1 and 160),
+  organization text not null default '' check (char_length(organization) <= 200),
+  designation text not null default '' check (char_length(designation) <= 160),
+  email text not null default '' check (char_length(email) <= 254),
+  phones jsonb not null default '[]'::jsonb check (jsonb_typeof(phones) = 'array'),
+  websites jsonb not null default '[]'::jsonb check (jsonb_typeof(websites) = 'array'),
+  address text not null default '' check (char_length(address) <= 750),
+  source_notes text not null default '' check (char_length(source_notes) <= 3000),
+  private_note text not null default '' check (char_length(private_note) <= 3000),
+  source text not null default 'CSV import' check (char_length(source) <= 140),
+  labels text not null default '' check (char_length(labels) <= 500),
+  status text not null default 'met' check (status in ('met','contacted','invited','joined')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists moo_contacts_owner_idx on public.moo_contacts(owner_id, updated_at desc);
+alter table public.moo_contacts enable row level security;
+revoke all on public.moo_contacts from anon, authenticated;
+grant select, insert, update, delete on public.moo_contacts to authenticated;
+
+create policy "moo_contacts_owner_read"
+  on public.moo_contacts for select to authenticated
+  using (owner_id = (select auth.uid()));
+create policy "moo_contacts_owner_insert"
+  on public.moo_contacts for insert to authenticated
+  with check (owner_id = (select auth.uid()));
+create policy "moo_contacts_owner_update"
+  on public.moo_contacts for update to authenticated
+  using (owner_id = (select auth.uid()))
+  with check (owner_id = (select auth.uid()));
+create policy "moo_contacts_owner_delete"
+  on public.moo_contacts for delete to authenticated
+  using (owner_id = (select auth.uid()));
+
+-- Do NOT add policies that make moo_contacts readable by anon or by other members.
+-- The importing member must obtain each person's consent before inviting them.
