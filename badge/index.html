@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#143D35">
+<title>MOO Badge Studio · Create Your Networking Badge</title>
+<style>
+:root{--forest:#143D35;--copper:#DC976C;--ivory:#F9F5EC;--teal:#267965;--muted:#697c70}*{box-sizing:border-box}
+body{margin:0;background:var(--ivory);color:var(--forest);font:15px/1.55 system-ui,Arial}button,input,select{font:inherit}button{cursor:pointer}
+button:disabled{opacity:.45;cursor:not-allowed}.shell{max-width:1100px;margin:auto;padding:0 18px}.top{background:#143D35;color:#fff;padding:17px 0}.top .shell{display:flex;justify-content:space-between;gap:16px;align-items:center}.top a{color:#f7d6ba}.brand{font-weight:900;letter-spacing:.11em}.brand small{display:block;font-size:10px;letter-spacing:.12em;color:#f1c2a3}
+.hero{padding:34px 0}.hero h1{font:normal clamp(32px,5vw,55px)/1.1 Georgia,serif;margin:5px 0}.hero p{max-width:710px;color:var(--muted)}.hint{font-size:12px;color:var(--muted)}.eyebrow{font-size:11px;letter-spacing:.17em;color:#8c664b;text-transform:uppercase;font-weight:800}
+.columns{display:grid;grid-template-columns:1fr 1fr;gap:18px}.card{padding:22px;background:#fff;border:1px solid #e6e0d5;border-radius:19px;box-shadow:0 10px 24px #10372f0d;margin:0 0 20px}.card h2{margin-top:0;font-size:22px}.btns{display:flex;flex-wrap:wrap;gap:9px;margin:14px 0}.btn{padding:11px 16px;border:0;border-radius:10px;background:var(--copper);color:#13392e;font-weight:800}.btn.alt{background:#e6f1e8}.btn.outline{background:transparent;border:1px solid #b3c2b6}.url{font:12px/1.5 monospace;word-break:break-word;color:#496856}
+.canvas{display:flex;align-items:center;justify-content:center;background:#edf1eb;border-radius:14px;min-height:285px;padding:18px}#qrcode{background:#fff;padding:14px;border-radius:10px}#qrcode canvas,#qrcode img{max-width:100%;height:auto}
+#badgeImg{display:none;max-width:260px;width:100%;margin:15px auto;border-radius:13px;box-shadow:0 12px 32px #143D354a}#badgeImg.show{display:block}
+label{display:block;font-size:12px;font-weight:750;margin:12px 0 4px}input,select{display:block;width:100%;background:#fff;border:1px solid #c6d1c7;border-radius:9px;padding:10px}input[type=checkbox]{width:auto}
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}.check{display:flex;gap:9px;align-items:flex-start;font-weight:450}.check input{margin-top:3px}
+.notice{background:#fff5e6;color:#6c4f2d;border:1px solid #ebc99d;border-radius:10px;padding:12px;margin:14px 0;font-size:13px}.notice.err{background:#ffefea;border-color:#e9beb4;color:#8d392b}.hidden{display:none!important}.price-options{display:grid;grid-template-columns:1fr 1fr;gap:10px}.price-card{border:2px solid #e1e5dc;background:#f8faf6;border-radius:13px;padding:13px;cursor:pointer}.price-card:has(input:checked){border-color:#bb7c58;background:#fff5e9}.price-card input{display:inline;width:auto}.price-card strong{display:block;font-size:24px}.order{scroll-margin-top:16px}.tiny{font-size:11px;color:var(--muted)}footer{margin-top:30px;padding:22px 0;background:#e7eee7;font-size:12px}
+@media(max-width:720px){.columns,.field-grid{grid-template-columns:1fr}.card{padding:17px}}
+</style></head><body>
+<header class="top"><div class="shell"><div class="brand">Ⓜ MOO <small>MEN OF OPPORTUNITY · LOCAL · DIGITAL · TRUST</small></div><a id="back" href="../">← Back to MOO</a></div></header>
+<main class="shell">
+<section class="hero"><span class="eyebrow">Your identity · Your QR · Your opportunities</span><h1>Wear your opportunity.</h1><p>Create a genuine scannable QR and a personalised MOO badge in forest green and copper. The QR opens the same member page, including future updates to their profile.</p></section>
+<div id="alert" aria-live="polite" class="notice hidden"></div>
+<div class="columns">
+<section class="card"><h2>1 · Generate QR code</h2><strong id="memberName">MOO member</strong><p class="url" id="memberUrl"></p><div class="btns"><button class="btn" id="qrButton" onclick="makeQR()">◩ Generate My QR Code</button><button class="btn alt" id="qrDownload" onclick="downloadQR()" disabled>Download QR PNG ↓</button></div><div class="canvas"><div id="qrcode"><p class="hint">Generate your QR to see it here.</p></div></div><p class="hint">QR contains only the profile link, not any private contact details. A public profile must be activated before printing member QR codes.</p></section>
+<section class="card"><h2>2 · Personalised badge</h2><p class="hint">85 × 110 mm · high-resolution print artwork · optional magnetic fitting</p><div class="btns"><button class="btn" id="createBadge" onclick="createBadge()">Create My Badge</button><button class="btn alt" id="badgeDownload" onclick="downloadBadge()" disabled>Download Badge PNG ↓</button></div><img id="badgeImg" alt="Personalized forest-green MOO badge with real QR code"/><canvas id="badgeCanvas" width="1000" height="1294" class="hidden"></canvas><p class="hint">Free design download. Verify a printed sample on another mobile phone before placing a manufacturing order.</p><button class="btn" onclick="openOrder()">Buy My MOO Badge ↗</button></section>
+</div>
+<section id="orderPanel" class="card order hidden"><h2>3 · Order your physical MOO badge</h2><p class="hint">Indicative product pricing. Physical production, taxes, packaging and shipping will be confirmed by the organiser before any payment or binding purchase.</p>
+<div class="price-options"><label class="price-card"><input type="radio" name="edition" value="Standard" checked onchange="updatePrice()"><span>Standard · full-colour acrylic + magnet</span><strong>₹449</strong><span class="tiny">Indicative per badge</span></label><label class="price-card"><input type="radio" name="edition" value="Executive" onchange="updatePrice()"><span>Executive · premium finish + magnet</span><strong>₹799</strong><span class="tiny">Indicative per badge</span></label></div>
+<form id="orderForm"><div class="field-grid"><div><label for="buyer">Your name *</label><input id="buyer" required maxlength="80"></div><div><label for="mobile">Mobile / WhatsApp *</label><input id="mobile" required inputmode="tel" maxlength="20" placeholder="+91…"></div><div><label for="email">Email (optional)</label><input id="email" type="email" maxlength="120"></div><div><label for="quantity">Quantity *</label><input id="quantity" type="number" value="1" min="1" max="100" required oninput="updatePrice()"></div><div><label for="city">Delivery city *</label><input id="city" required maxlength="100" placeholder="Greater Noida"></div><div><label for="mount">Attachment</label><select id="mount"><option>Magnetic</option><option>Safety pin</option><option>Clip</option></select></div></div>
+<label class="check"><input type="checkbox" id="consent" required>I consent to sharing these details with MOO / Mansavi Villa only for this badge enquiry and follow-up. This is not an online payment or confirmed order.</label>
+<label class="check" id="memberNotice"><input type="checkbox" id="verify" required>I understand member QR links require a live, publicly accessible MOO ERP profile. I will test the QR before printing.</label>
+<div class="notice">Estimated product subtotal: <strong id="priceTotal">₹449</strong> · GST, shipping and any finishing options subject to quotation. No payment is collected here.</div>
+<div class="btns"><button class="btn" type="button" onclick="enquire('wa')">Enquire on WhatsApp ↗</button><button class="btn alt" type="button" onclick="enquire('email')">Enquire by email ↗</button></div></form></section>
+</main><footer><div class="shell">MOO · Men of Opportunity · The saved QR links to a live webpage; updates to that webpage appear on future scans. Printed name and artwork do not update automatically.</div></footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+'use strict';
+const par=new URLSearchParams(location.search),home=par.get('home')==='1',uid=par.get('member')||'';
+const validMember=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uid);
+const valid=home||validMember, person=(home?'Vineet Tomar':String(par.get('name')||'MOO Member')).trim().slice(0,80)||'MOO Member';
+const target=home?new URL('../',location.href).href:validMember?new URL('./?member='+encodeURIComponent(uid),location.href).href:'';
+const $=id=>document.getElementById(id);let qrCanvas=null;
+$('memberName').textContent=person;$('memberUrl').textContent=target||'Open your published MOO profile to generate its QR.';$('buyer').value=person;$('back').href=home?'../':'./';
+$('memberNotice').classList.toggle('hidden',home);$('verify').required=!home;
+if(!valid){$('qrButton').disabled=true;$('createBadge').disabled=true;warn('A valid MOO profile is required. Open Badge Studio from your published member page.',true)}
+else if(!home){warn('Pilot limitation: The shared member database is not yet configured. A member QR may not work for another visitor until the ERP backend is activated. Test from a second phone before ordering.',false)}
+function warn(msg,bad){$('alert').className='notice'+(bad?' err':'');$('alert').textContent=msg;}
+function makeQR(){
+ if(!valid)return null;
+ if(!window.QRCode){warn('QR generation library did not load. Check your internet connection.',true);return null}
+ try{
+ $('qrcode').innerHTML='';new QRCode($('qrcode'),{text:target,width:360,height:360,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});
+ qrCanvas=$('qrcode').querySelector('canvas');if(!qrCanvas)throw Error('No QR canvas available');
+ $('qrDownload').disabled=false;return qrCanvas;
+ }catch(e){warn('QR generation error: '+e.message,true);return null}
+}
+function downloadData(data,filename){let a=document.createElement('a');a.href=data;a.download=filename;document.body.appendChild(a);a.click();a.remove()}
+function slug(s){return s.replace(/[^a-z0-9 ]/gi,'').trim().replace(/\s+/g,'-').slice(0,45)||'Member'}
+function downloadQR(){if(!qrCanvas&&!makeQR())return;const c=document.createElement('canvas');c.width=c.height=800;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,800,800);x.imageSmoothingEnabled=false;x.drawImage(qrCanvas,48,48,704,704);downloadData(c.toDataURL('image/png'),'MOO-'+slug(person)+'-QR.png')}
+function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r)}
+function createBadge(){
+ if(!valid)return;if(!qrCanvas&&!makeQR())return;
+ const cv=$('badgeCanvas'),c=cv.getContext('2d');
+ const g=c.createLinearGradient(0,0,1000,1294);g.addColorStop(0,'#204f40');g.addColorStop(1,'#092f29');c.fillStyle=g;roundRect(c,5,5,990,1284,40);c.fill();
+ c.strokeStyle='#dc976c';c.lineWidth=12;roundRect(c,23,23,954,1248,32);c.stroke();
+ c.textAlign='center';c.fillStyle='#ffe0c2';c.font='bold 144px system-ui';c.fillText('MOO',500,225);
+ c.fillStyle='#f9f5ec';c.font='30px system-ui';c.fillText('MEN OF OPPORTUNITY',500,283);
+ c.strokeStyle='#dc976c';c.lineWidth=3;c.beginPath();c.moveTo(265,320);c.lineTo(735,320);c.stroke();
+ c.fillStyle='#fff5e6';c.font='bold 52px system-ui';c.fillText(person,500,393,870);
+ c.fillStyle='#ffffff';roundRect(c,157,445,686,686,30);c.fill();
+ c.imageSmoothingEnabled=false;c.drawImage(qrCanvas,197,485,606,606);c.imageSmoothingEnabled=true;
+ c.fillStyle='#ffe0c2';c.font='bold 33px system-ui';c.fillText('SCAN · DISCOVER OPPORTUNITIES',500,1180,910);
+ c.font='24px system-ui';c.fillText('LOCAL  •  DIGITAL  •  TRUST',500,1223);
+ $('badgeImg').src=cv.toDataURL('image/png');$('badgeImg').classList.add('show');$('badgeDownload').disabled=false;
+}
+function downloadBadge(){if($('badgeDownload').disabled)createBadge();if(!$('badgeDownload').disabled)downloadData($('badgeCanvas').toDataURL('image/png'),'MOO-'+slug(person)+'-Badge-300dpi.png')}
+function openOrder(){if(!valid){warn('A valid member or original profile URL is needed before ordering.',true);return}if(!$('badgeImg').classList.contains('show'))createBadge();$('orderPanel').classList.remove('hidden');$('orderPanel').scrollIntoView({behavior:'smooth',block:'start'})}
+function updatePrice(){const val=document.querySelector('input[name=edition]:checked')?.value==='Executive'?799:449;const qty=Math.max(1,Math.min(100,Number($('quantity').value)||1));$('priceTotal').textContent='₹'+(val*qty).toLocaleString('en-IN')}
+function enquire(channel){
+ const form=$('orderForm');if(!form.reportValidity())return;
+ const phone=$('mobile').value.trim();if(!/^\+?[0-9 ()-]{7,20}$/.test(phone)){warn('Enter a valid mobile number.',true);return}
+ const edition=document.querySelector('input[name=edition]:checked').value;const q=$('quantity').value;
+ const message='MOO BADGE ENQUIRY\nName: '+person+'\nProfile URL: '+target+'\nBuyer: '+$('buyer').value.trim()+'\nMobile: '+phone+'\nEmail: '+$('email').value.trim()+'\nEdition: '+edition+'\nQuantity: '+q+'\nAttachment: '+$('mount').value+'\nDelivery city: '+$('city').value.trim()+'\nIndicative item total: '+$('priceTotal').textContent+'\nGST, shipping, final pricing and payment terms to be confirmed. No order placed or payment made.';
+ if(channel==='wa')window.open('https://wa.me/919990414014?text='+encodeURIComponent(message),'_blank','noopener,noreferrer');
+ else location.href='mailto:mansavi.villa@gmail.com?subject='+encodeURIComponent('MOO badge enquiry · '+person)+'&body='+encodeURIComponent(message);
+}
+</script></body></html>
