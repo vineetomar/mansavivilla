@@ -155,3 +155,53 @@ create policy "moo_contacts_owner_delete"
 
 -- Do NOT add policies that make moo_contacts readable by anon or by other members.
 -- The importing member must obtain each person's consent before inviting them.
+
+
+-- BNI WEEKLY PRESENTATIONS: each member controls when a weekly brief becomes public.
+-- This is a standalone MOO feature, not an official BNI data service.
+create table if not exists public.moo_bni_weekly (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references public.moo_profiles(user_id) on delete cascade,
+  chapter text not null default '' check (char_length(chapter) <= 100),
+  meeting_date date not null,
+  headline text not null default '' check (char_length(headline) <= 140),
+  given_text text not null default '' check (char_length(given_text) <= 1200),
+  ask_text text not null default '' check (char_length(ask_text) <= 1200),
+  referral_text text not null default '' check (char_length(referral_text) <= 900),
+  duration_seconds integer not null default 30 check (duration_seconds in (30,45,60,90)),
+  release_mode text not null default 'manual' check (release_mode in ('manual','scheduled')),
+  is_released boolean not null default false,
+  scheduled_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique(owner_id, meeting_date),
+  constraint scheduled_release_has_time check (release_mode <> 'scheduled' or scheduled_at is not null)
+);
+create index if not exists moo_bni_owner_meeting_idx on public.moo_bni_weekly(owner_id, meeting_date desc);
+alter table public.moo_bni_weekly enable row level security;
+revoke all on public.moo_bni_weekly from anon, authenticated;
+grant select on public.moo_bni_weekly to anon, authenticated;
+grant insert, update, delete on public.moo_bni_weekly to authenticated;
+-- IMPORTANT: never expose unreleased drafts. Scheduling is checked by PostgreSQL NOW(), not the viewer's clock.
+create policy "moo_bni_read_public_when_released_or_owner"
+on public.moo_bni_weekly for select to anon, authenticated using (
+  owner_id = (select auth.uid())
+  or (
+    exists (select 1 from public.moo_profiles p
+      where p.user_id = owner_id and p.public_profile = true)
+    and (
+      (release_mode = 'manual' and is_released = true)
+      or (release_mode = 'scheduled' and scheduled_at <= now())
+    )
+  )
+);
+create policy "moo_bni_insert_by_owner"
+on public.moo_bni_weekly for insert to authenticated
+with check (owner_id = (select auth.uid()));
+create policy "moo_bni_update_by_owner"
+on public.moo_bni_weekly for update to authenticated
+using (owner_id = (select auth.uid()))
+with check (owner_id = (select auth.uid()));
+create policy "moo_bni_delete_by_owner"
+on public.moo_bni_weekly for delete to authenticated
+using (owner_id = (select auth.uid()));
